@@ -1,25 +1,19 @@
-# Weirdest job title: 60-char gate, ship + json line (round 4).
+"""Weirdest job title plater."""
 import json
 import os
-import pathlib
+from pathlib import Path
 
-MAX_N = 60
-RUN_ID = "jbt4-jobtitle-r4"
+EDGE = 60
+DIVISION = "fridge-light"
+read = lambda p: (Path(p).resolve().parent / "entry.txt").read_bytes().decode("utf-8").strip()
+within = lambda t: 1 <= len(t) <= EDGE
+emit = lambda tag, t, held: print(json.dumps({"badge": tag, "width": len(t), "held": held}))
 
-
-def guarded(value, floor=1, top=MAX_N):
-    return floor <= len(value) <= top and value.strip() != ""
-
-
-def forward():
-    value = (pathlib.Path(__file__).resolve().parent / "entry.txt").read_text(encoding="utf-8").strip()
-    if not guarded(value):
-        print(json.dumps({"run": RUN_ID, "ok": False, "n": len(value)}))
-        return
-    outdir = pathlib.Path(os.environ.get("MAKEFUN_OUTPUT_DIR") or "out")
-    outdir.mkdir(parents=True, exist_ok=True)
-    (outdir / "entry.txt").write_bytes((value + "\n").encode("utf-8"))
-    print(json.dumps({"run": RUN_ID, "ok": True, "n": len(value), "top": MAX_N}))
-
-
-forward()
+title = read(Path(__file__))
+if within(title):
+    dest = Path(os.environ.get("MAKEFUN_OUTPUT_DIR") or "out")
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / "entry.txt").write_bytes(title.encode("utf-8"))
+    emit("stamped", title, True)
+else:
+    emit("bent", title, False)
